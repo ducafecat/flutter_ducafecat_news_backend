@@ -1,0 +1,64 @@
+version: "3"
+services:
+  redis:
+    image: redis
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      docker_net:
+        ipv4_address: 172.22.0.10
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - TZ=Asia/Shanghai
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=${PASSWORD}
+    volumes:
+      - ./docker-data/mongo:/data/db
+    networks:
+      docker_net:
+        ipv4_address: 172.22.0.11
+
+  # starpi
+  # admin / 123456 / admin@ducafecat.tech
+  strapi-app:
+    image: strapi/strapi
+    container_name: strapi-app
+    restart: always
+    ports:
+      - 1337:1337
+    # command: strapi build
+    # command: strapi start
+    environment:
+      - TZ=Asia/Shanghai
+      - DATABASE_CLIENT=mongo
+      - DATABASE_HOST=mongo
+      - DATABASE_PORT=27017
+      - DATABASE_NAME=strapi
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=${PASSWORD}
+      - DATABASE_AUTHENTICATION_DATABASE=strapi
+      # - NODE_ENV=production
+    depends_on:
+      - mongo
+    volumes:
+      - ./docker-data/strapi-app:/srv/app
+    networks:
+      docker_net:
+        ipv4_address: 172.22.0.12
+
+networks:
+  docker_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
